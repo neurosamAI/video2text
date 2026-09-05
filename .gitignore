@@ -1,9 +1,8 @@
 .venv
-video2text.app/Contents/Resources/venv/
-video2text.app/Contents/Resources/app/
-video2text.app/Contents/Resources/static/
-video2text.app/Contents/Resources/bin/
-video2text.app/Contents/Resources/lib/
+# video2text.app/ is entirely build output (./build.sh) — its source lives
+# in packaging/ instead. The built app is distributed via GitHub Releases,
+# never committed here.
+video2text.app/
 .env
 sample/
 __pycache__/

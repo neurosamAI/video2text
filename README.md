@@ -1,4 +1,14 @@
-# video2text
+<p align="center">
+  <img src="docs/icon.png" width="120" alt="video2text 아이콘" />
+</p>
+
+<h1 align="center">video2text</h1>
+
+<p align="center">Webex 녹화본을 로컬에서 화자 분리 텍스트로 — 인터넷에 아무것도 올리지 않습니다.</p>
+
+<p align="center">
+  <img src="docs/screenshot.png" width="720" alt="video2text 실행 화면" />
+</p>
 
 mp4 파일(주로 Webex 녹화본)을 넣으면 화자 분리(diarization)된 텍스트 전사본을 만들어주는 완전 로컬 앱입니다.
 온라인 회의(화면 분할)든 오프라인 회의 녹화(단일 카메라 + 믹스된 오디오)든, 오디오 트랙 하나에 여러 화자가 섞여

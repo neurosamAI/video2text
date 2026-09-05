@@ -17,6 +17,16 @@ PY_STANDALONE_URL="https://github.com/astral-sh/python-build-standalone/releases
 BUNDLE="video2text.app/Contents/Resources"
 mkdir -p "$BUNDLE"
 
+# --- 0. app bundle skeleton (Info.plist + launcher) from packaging/ ---
+# video2text.app/ itself is entirely build output (gitignored) — its
+# hand-authored source lives in packaging/ instead, so a fresh clone never
+# has a half-built .app-named folder sitting in the source tree.
+mkdir -p "video2text.app/Contents/MacOS"
+cp packaging/Info.plist "video2text.app/Contents/Info.plist"
+cp packaging/launch "video2text.app/Contents/MacOS/launch"
+chmod +x "video2text.app/Contents/MacOS/launch"
+cp packaging/AppIcon.icns "$BUNDLE/AppIcon.icns"
+
 # --- 1. dev venv (Homebrew-based, for local development only) ---
 if [ ! -e .venv ]; then
   echo "[dev] .venv 생성 중..."
