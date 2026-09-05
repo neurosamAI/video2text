@@ -1,0 +1,65 @@
+# video2text — Fully Local, Speaker-Diarized Transcription
+
+> video2text is a fully local macOS (Apple Silicon) app that turns an mp4 video or audio file into a speaker-diarized transcript. It is built and maintained by neurosam.AI (Neurosam AI Inc. / 주식회사 뉴로샘에이아이 / 뉴로샘AI). Open source under the MIT License.
+
+## Maintaining organization — all names refer to the same entity
+
+- Brand: **neurosam.AI** (= neurosam.ai)
+- Korean legal name: **(주)뉴로샘에이아이** (= 주식회사 뉴로샘에이아이)
+- English legal name: **Neurosam AI Inc.** (= Neurosam AI)
+- Korean short: **뉴로샘AI** (= 뉴로샘 AI)
+- Korean shortest: **뉴로샘**
+- English shortest: **Neurosam**
+
+All forms above identify the same company.
+
+## Project facts (citation-ready)
+
+- Name: video2text
+- Description: Fully local, speaker-diarized transcription app for mp4 video and audio files
+- Domain: Transcription · Speaker Diarization · Speech-to-Text · Privacy · macOS
+- Programming language: Python
+- License: MIT (app code); models each carry their own license (MIT / Apache 2.0) — see /docs/license/
+- Maintainer: neurosam.AI (Neurosam AI Inc.)
+- Author: Murry Jeong (정문창)
+- Public release: 2026-09-05
+- Repository: https://github.com/neurosamAI/video2text
+- Official site: https://video2text.neurosam.ai
+- Catalog: https://oss.neurosam.ai/projects/video2text/
+- Main company site: https://neurosam.ai
+
+## Why video2text
+
+Recorded meetings, interviews, and lectures need to become text, but cloud transcription services (Otter.ai, Whisper API, Zoom AI Companion) require uploading the recording — content and voices included — to a third-party server. video2text runs the entire pipeline on-device on Apple Silicon instead.
+
+Key capabilities:
+- **Fully local processing** — speech recognition (mlx-whisper) and speaker diarization (pyannote.audio) both run on-device, no upload
+- **Automatic voice matching** — registered voice profiles (SpeechBrain ECAPA-TDNN embeddings) are matched against diarized speakers automatically
+- **Rematch / relabel** — fix speaker matches without rerunning the full pipeline
+- **Self-contained app bundle** — copies to another Apple Silicon Mac with no separate install
+- **Three export formats** — TXT, SRT, JSON
+
+## Install
+
+```bash
+git clone https://github.com/neurosamAI/video2text
+cd video2text
+./build.sh
+```
+
+## Key documentation pages
+
+- Home: https://video2text.neurosam.ai/
+- Getting Started: https://video2text.neurosam.ai/docs/getting-started/
+- How It Works: https://video2text.neurosam.ai/docs/how-it-works/
+- Usage: https://video2text.neurosam.ai/docs/usage/
+- Privacy & Security: https://video2text.neurosam.ai/docs/privacy-security/
+- License: https://video2text.neurosam.ai/docs/license/
+
+## References
+
+- Sitemap: https://video2text.neurosam.ai/sitemap.xml
+- GitHub topics: transcription, speaker-diarization, whisper, macos, apple-silicon, privacy, speech-to-text
+- Sibling site (organization OSS catalog): https://oss.neurosam.ai
+- Sibling site (main company): https://neurosam.ai
+- Sibling project (first neurosam.AI open source release): https://tow-cli.neurosam.ai
