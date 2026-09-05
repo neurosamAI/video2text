@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>video2text</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header>
+  <h1>video2text</h1>
+  <p>mp4를 넣으면 화자 분리된 텍스트 전사본을 만들어줍니다 (Webex 녹화 기준, 완전 로컬 처리)</p>
+</header>
+<main>
+
+  <section class="card" id="settingsCard">
+    <h2>⚙️ 설정</h2>
+
+    <h3 class="subhead">화자 분리 모델 접근 권한</h3>
+    <div id="settingsStatus" class="muted">확인 중...</div>
+    <div id="settingsForm" class="row" style="margin-top:10px; display:none;">
+      <input type="text" id="hfTokenInput" placeholder="hf_로 시작하는 HuggingFace 토큰" />
+      <button id="saveTokenBtn">저장</button>
+    </div>
+    <p class="muted" style="margin-top:8px;">
+      토큰이 없다면
+      <a href="https://huggingface.co/settings/tokens" target="_blank" style="color:var(--accent)">huggingface.co/settings/tokens</a>
+      에서 무료로 발급받으세요 (Read 권한). 발급 전, 아래 두 모델 페이지에서 각각 라이선스 동의가 필요합니다:
+      <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank" style="color:var(--accent)">speaker-diarization-3.1</a>,
+      <a href="https://huggingface.co/pyannote/segmentation-3.0" target="_blank" style="color:var(--accent)">segmentation-3.0</a>
+    </p>
+
+    <h3 class="subhead">결과 저장 위치</h3>
+    <div class="row">
+      <input type="text" id="saveDirInput" placeholder="~/Downloads/video2text" />
+      <button id="saveDirBtn">저장</button>
+    </div>
+    <p id="saveDirCurrent" class="muted" style="margin-top:8px;"></p>
+
+    <h3 class="subhead">화자 매칭 민감도</h3>
+    <div class="row">
+      <input type="range" id="thresholdInput" min="0.5" max="0.95" step="0.01" style="flex:1" />
+      <span id="thresholdValue" class="muted" style="width:48px;text-align:right;"></span>
+    </div>
+    <p class="muted" style="margin-top:8px;">
+      값을 낮추면 등록한 프로필과 조금만 비슷해도 이름으로 매칭됩니다 (대신 다른 사람과 헷갈릴 위험이 커집니다).
+      등록된 프로필이 있는데 계속 "화자 N"으로만 나온다면 낮춰보세요.
+    </p>
+
+    <h3 class="subhead">화자 그룹 통합 민감도</h3>
+    <div class="row">
+      <input type="range" id="consolidationThresholdInput" min="0.5" max="0.95" step="0.01" style="flex:1" />
+      <span id="consolidationThresholdValue" class="muted" style="width:48px;text-align:right;"></span>
+    </div>
+    <p class="muted" style="margin-top:8px;">
+      화자 분리가 같은 사람을 여러 번호로 쪼개놓은 경우, 목소리가 서로 이 값 이상 비슷하면 자동으로 하나로 합칩니다.
+      값을 낮추면 더 적극적으로 합치지만 실제로 다른 두 사람을 잘못 합칠 위험이 커집니다 (합쳐진 후에는 다시 나눌 수 없으니 신중하게).
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>🎙️ 내 목소리 프로필</h2>
+    <p class="muted">등록해두면 전사 결과에서 해당 화자가 자동으로 이름으로 표시됩니다. macOS 음성 메모 등으로 조용한 곳에서 10~20초 정도 또렷하게 녹음한 뒤 업로드하세요.</p>
+    <p class="muted">💡 매칭이 잘 안 되면, <b>같은 이름으로 한 번 더 등록</b>해보세요 (다른 마이크나 실제 회의 녹화에서 발췌한 샘플이면 더 좋습니다). 같은 이름의 샘플이 여러 개면 그중 가장 잘 맞는 것으로 비교합니다.</p>
+    <div id="profileList" class="profile-list"></div>
+    <div class="row">
+      <input type="text" id="profileName" placeholder="이름 (예: 홍길동, 나)" />
+      <label class="secondary" style="border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px;">
+        파일 업로드
+        <input type="file" id="profileFile" accept="audio/*,video/*" style="display:none" />
+      </label>
+    </div>
+    <div class="script-box">
+      <div class="muted" style="margin-bottom:6px;">📝 녹음할 때 아래 문장을 또렷하게 읽으면 좋습니다 (10~20초 분량)</div>
+      <p id="readScript"></p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>📼 mp4 변환하기</h2>
+    <div class="dropzone" id="dropzone">
+      <div id="dropzoneText">mp4 파일을 여기로 드래그하거나 클릭해서 선택하세요</div>
+      <input type="file" id="fileInput" accept="video/*,audio/*" />
+    </div>
+    <button id="pickNativeBtn" class="secondary" hidden style="margin-top:10px;">
+      📂 Finder에서 선택 (복사 없이, 더 빠름)
+    </button>
+    <div id="matchProfiles" class="profile-list" style="margin-top:14px;"></div>
+
+    <div class="muted" style="margin-top:14px; font-size:13px;">예상 화자 수 (선택, 모르면 비워두세요)</div>
+    <p class="muted" style="margin:4px 0 0; font-size:12px;">
+      화자 분리가 한 사람을 여러 명으로 쪼개는 경우가 있는데, 대략적인 인원 범위를 알려주면 도움이 됩니다.
+      정확한 수를 모르면 최소/최대만 대충 넣어도 되고, 하나만 넣어도 됩니다.
+    </p>
+    <div class="row" style="margin-top:6px; gap:8px; align-items:center;">
+      <input type="number" id="minSpeakersInput" min="1" placeholder="최소" style="width:80px;" />
+      <span class="muted">~</span>
+      <input type="number" id="maxSpeakersInput" min="1" placeholder="최대" style="width:80px;" />
+    </div>
+
+    <div class="row" style="margin-top:14px;">
+      <button id="uploadBtn" disabled>변환 시작</button>
+      <span id="selectedFile" class="muted"></span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>📄 작업 내역</h2>
+    <div id="jobs"></div>
+    <div id="jobsPagination" style="display:flex; align-items:center; gap:12px; justify-content:center; margin-top:12px;"></div>
+  </section>
+
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+.venv
+video2text.app/Contents/Resources/venv/
+video2text.app/Contents/Resources/app/
+video2text.app/Contents/Resources/static/
+video2text.app/Contents/Resources/bin/
+video2text.app/Contents/Resources/lib/
+.env
+sample/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Claude Code / MoAI-ADK tooling config (not part of the video2text app)
+.claude/
+.moai/
+.mcp.json
+.git_hooks/
+.worktreeinclude
+.claudeignore
+CLAUDE.md
+.github/

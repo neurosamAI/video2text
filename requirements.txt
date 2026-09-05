@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pyannote.audio==3.4.0
+torch==2.5.1
+torchaudio==2.5.1
+huggingface_hub==0.24.7
+speechbrain
+mlx-whisper
+soundfile
+numpy<2
+python-dotenv
+pywebview
+pyobjc-framework-Cocoa
+pyobjc-framework-WebKit
+pyobjc-framework-Quartz

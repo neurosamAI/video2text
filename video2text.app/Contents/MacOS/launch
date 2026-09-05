@@ -1,0 +1,10 @@
+#!/bin/bash
+# Launcher for the video2text.app bundle. Fully self-contained: the app's
+# own Python runtime and all dependencies live in Contents/Resources/venv,
+# and the app code is copied into Contents/Resources/app (see build.sh).
+# This bundle can be moved (e.g. to /Applications) independently of the
+# original project/source folder.
+DIR="$(cd "$(dirname "$0")/../Resources" && pwd)"
+
+cd "$DIR" || exit 1
+exec "$DIR/venv/bin/python" -m app.desktop
