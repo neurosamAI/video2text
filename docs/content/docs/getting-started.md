@@ -1,33 +1,27 @@
 ---
 title: Getting Started
-description: "Install video2text, set up model access, and run your first transcription."
+description: "Download video2text, set up model access, and run your first transcription."
 weight: 2
 ---
 
 ## Requirements
 
 - **Apple Silicon Mac** (M1 or newer) running macOS 12+. Intel Macs are not supported — torch/mlx are built for Apple Silicon only.
-- **Python 3.11** recommended. (3.13/3.14 can hit compatibility issues with some ML packages.)
 - A free **HuggingFace** account, to access the gated speaker-diarization model.
 
-## 1. Clone and build
+## 1. Download the app
 
-```bash
-git clone https://github.com/neurosamAI/video2text
-cd video2text
-./build.sh
-```
+Grab `video2text-v1.0.0-macos-arm64.zip` from the [latest release](https://github.com/neurosamAI/video2text/releases/latest) and unzip it. Put `video2text.app` wherever you like — moving it to `/Applications` lets you manage it like any other app.
 
-`build.sh` creates a virtualenv, installs all dependencies (torch, mlx-whisper, pyannote.audio, speechbrain, fastapi, pywebview, and more), and syncs the code into a self-contained `video2text.app` bundle. The first run downloads several gigabytes of ML dependencies — subsequent runs of `./build.sh` reuse the existing venv and just re-sync `app/` and `static/`.
+No build step needed — the app bundles its own Python runtime and ffmpeg.
 
-If you'd rather set things up manually:
+## 2. Run it
 
-```bash
-python3.11 -m venv .venv
-./.venv/bin/pip install -r requirements.txt
-```
+Double-click `video2text.app`. A native window opens — no browser required.
 
-## 2. Get access to the diarization model (one-time)
+If macOS shows an "unidentified developer" warning, right-click the app in Finder → **Open** once to allow it. This bundle is fully self-contained: it works wherever you put it, with no separate Homebrew or runtime install.
+
+## 3. Get access to the diarization model (one-time)
 
 `pyannote/speaker-diarization-3.1` is a gated model on HuggingFace — it requires a free account, a one-time license agreement, and an access token.
 
@@ -36,21 +30,31 @@ python3.11 -m venv .venv
    - [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1)
    - [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0)
 3. Create a **Read**-scoped access token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
-4. Save it to `~/Library/Application Support/video2text/.env`:
+4. Open the app — the **Settings** card at the top has a token field. Paste your token in and save.
 
-   ```
-   HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   ```
+Using video2text on more than one Mac? Each Mac needs its own token — HuggingFace's license agreement is per-account, so a shared token can't be baked into the app.
 
-   (For convenience while developing, a `.env` in the project root is also recognized. If you plan to use both the dev checkout and the packaged app, the Application Support path is preferred, so both always see the same token.)
+## Building from source instead
 
-## 3. Run it
+If you'd rather build the app yourself (for development, or to track `main`):
 
-**Desktop app (recommended):** double-click `video2text.app` in Finder. A native window opens — no browser needed. On first launch, if macOS shows an "unidentified developer" warning, right-click → Open once to allow it.
+```bash
+git clone https://github.com/neurosamAI/video2text
+cd video2text
+./build.sh
+```
 
-**Web server:** run `./run.sh`, then open [http://127.0.0.1:8765](http://127.0.0.1:8765) in a browser.
+`build.sh` creates a virtualenv, installs dependencies (torch, mlx-whisper, pyannote.audio, speechbrain, fastapi, pywebview, and more), and syncs the code into a self-contained `video2text.app` bundle. Re-run it any time you change code under `app/` or `static/`.
 
-`video2text.app` is a fully independent bundle — it keeps working even if you delete the original project folder or move the app to `/Applications` (though you won't be able to `./build.sh` a moved app back to the latest code — build once before you move it).
+Run it from source without building the app bundle:
+
+```bash
+python3.11 -m venv .venv          # Python 3.11 recommended
+./.venv/bin/pip install -r requirements.txt
+./run.sh                          # http://127.0.0.1:8765
+```
+
+During development, your HF token is read from `~/Library/Application Support/video2text/.env` (a project-root `.env` also works, see `.env.example`).
 
 ## Next steps
 

@@ -3,13 +3,18 @@ title: Home
 ---
 
 <div class="hero">
+  <img src="/icon.png" alt="video2text" style="width:72px;height:72px;border-radius:18px;margin:0 auto 1.25rem;display:block;">
   <h1>video2text</h1>
   <p class="subtitle">Turn any mp4 or audio recording into a speaker-diarized transcript — entirely on your Mac. Nothing gets uploaded.</p>
   <div class="hero-buttons">
-    <a href="/docs/getting-started/" class="btn btn-primary">Get Started</a>
+    <a href="https://github.com/neurosamAI/video2text/releases/latest" class="btn btn-primary">Download for macOS</a>
     <a href="https://github.com/neurosamAI/video2text" class="btn btn-secondary">GitHub</a>
   </div>
 </div>
+
+<p style="text-align:center;">
+  <img src="/screenshot.png" alt="video2text app window — drag-and-drop mp4 conversion, voice profile matching, and job history" style="max-width:100%;border-radius:12px;border:1px solid rgba(255,255,255,0.08);">
+</p>
 
 ## What is video2text?
 
@@ -65,18 +70,20 @@ Nothing crosses steps 1–5 over the network. The only network calls video2text 
 
 ## Quick Start
 
+No build required — download the packaged app and run it:
+
+1. Download `video2text-v1.0.0-macos-arm64.zip` from the [latest release](https://github.com/neurosamAI/video2text/releases/latest) and unzip it.
+2. Double-click `video2text.app`. (If macOS warns about an unidentified developer, right-click → Open once.)
+3. Set up HuggingFace access for the speaker-diarization model (one-time, free) — see [Getting Started](/docs/getting-started/).
+
+Prefer to build from source instead?
+
 ```bash
-# Clone and build the app bundle
 git clone https://github.com/neurosamAI/video2text
 cd video2text
-./build.sh
-
-# Launch the desktop app (double-click video2text.app)
-# — or run it as a local web server —
-./run.sh   # http://127.0.0.1:8765
+./build.sh      # builds video2text.app locally
+./run.sh        # or run it as a local web server at http://127.0.0.1:8765
 ```
-
-`pyannote/speaker-diarization-3.1` is a gated HuggingFace model, so a one-time free account, license agreement, and access token are required. See [Getting Started](/docs/getting-started/) for the full walkthrough.
 
 ## Why Local?
 

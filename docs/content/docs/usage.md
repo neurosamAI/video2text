@@ -17,7 +17,11 @@ Manage profiles from the settings area: list registered profiles, inspect or del
 
 ## 2. Convert a file
 
-Drag an mp4 or audio file onto the window (or click to choose one), check which voice profiles to match against for this conversion, and start. Progress is shown live through each pipeline stage: extract audio → diarize → transcribe → match speakers → done.
+Drag an mp4 or audio file onto the window, or use **Finder에서 선택** (select from Finder) to point at a file in place without copying it. Check which voice profiles to match against for this conversion, and start.
+
+If you have a rough idea of how many people are in the recording, fill in the optional **expected speaker count** (min/max, or just one number). Diarization occasionally splits one person into two speakers — giving it a headcount range helps it avoid that.
+
+Progress is shown live through each pipeline stage: extract audio → diarize → transcribe → match speakers → done.
 
 ## 3. Job history
 
@@ -45,6 +49,8 @@ Every completed job can be downloaded in three formats:
 | **TXT** | A readable transcript: `[00:12:34] Alex: Hi everyone...` |
 | **SRT** | Subtitles for a video, timed to the diarized segments |
 | **JSON** | Raw data — per-speaker blocks with timestamps, for scripting or further processing |
+
+Results are saved to `~/Downloads/video2text` by default (configurable in Settings).
 
 ## Settings
 
