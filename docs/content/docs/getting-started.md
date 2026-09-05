@@ -11,7 +11,7 @@ weight: 2
 
 ## 1. Download the app
 
-Grab `video2text-v1.0.0-macos-arm64.zip` from the [latest release](https://github.com/neurosamAI/video2text/releases/latest) and unzip it. Put `video2text.app` wherever you like — moving it to `/Applications` lets you manage it like any other app.
+Grab `video2text-v1.0.1-macos-arm64.zip` from the [latest release](https://github.com/neurosamAI/video2text/releases/latest) and unzip it. Put `video2text.app` wherever you like — moving it to `/Applications` lets you manage it like any other app.
 
 No build step needed — the app bundles its own Python runtime and ffmpeg.
 

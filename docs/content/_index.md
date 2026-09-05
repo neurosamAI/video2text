@@ -72,7 +72,7 @@ Nothing crosses steps 1–5 over the network. The only network calls video2text 
 
 No build required — download the packaged app and run it:
 
-1. Download `video2text-v1.0.0-macos-arm64.zip` from the [latest release](https://github.com/neurosamAI/video2text/releases/latest) and unzip it.
+1. Download `video2text-v1.0.1-macos-arm64.zip` from the [latest release](https://github.com/neurosamAI/video2text/releases/latest) and unzip it.
 2. Double-click `video2text.app`. (If macOS warns about an unidentified developer, right-click → Open once.)
 3. Set up HuggingFace access for the speaker-diarization model (one-time, free) — see [Getting Started](/docs/getting-started/).
 

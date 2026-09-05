@@ -6,7 +6,7 @@ defaultContentLanguageInSubdir = false
 
 [params]
   author = 'Neurosam AI Team'
-  version = 'v1.0.0'
+  version = 'v1.0.1'
   github = 'https://github.com/neurosamAI/video2text'
   mainSiteURL = 'https://neurosam.ai'
   ossURL = 'https://oss.neurosam.ai'

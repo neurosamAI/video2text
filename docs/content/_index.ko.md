@@ -72,7 +72,7 @@ Local file                         On this Mac only
 
 빌드가 필요 없습니다 — 패키징된 앱을 내려받아 실행하세요:
 
-1. [최신 릴리즈](https://github.com/neurosamAI/video2text/releases/latest)에서 `video2text-v1.0.0-macos-arm64.zip`을 다운로드하고 압축을 풉니다.
+1. [최신 릴리즈](https://github.com/neurosamAI/video2text/releases/latest)에서 `video2text-v1.0.1-macos-arm64.zip`을 다운로드하고 압축을 풉니다.
 2. `video2text.app`을 더블클릭합니다. (macOS가 "확인되지 않은 개발자" 경고를 표시하면, 우클릭 → 열기를 한 번 실행하세요.)
 3. 화자 분리 모델에 필요한 HuggingFace 접근 권한을 설정합니다(한 번만, 무료) — [시작하기](/ko/docs/getting-started/)를 참고하세요.
 

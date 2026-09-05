@@ -11,7 +11,7 @@ weight: 2
 
 ## 1. 앱 다운로드
 
-[최신 릴리즈](https://github.com/neurosamAI/video2text/releases/latest)에서 `video2text-v1.0.0-macos-arm64.zip`을 받아 압축을 풉니다. `video2text.app`은 원하는 위치에 두면 됩니다 — `/Applications`로 옮기면 다른 앱처럼 관리할 수 있습니다.
+[최신 릴리즈](https://github.com/neurosamAI/video2text/releases/latest)에서 `video2text-v1.0.1-macos-arm64.zip`을 받아 압축을 풉니다. `video2text.app`은 원하는 위치에 두면 됩니다 — `/Applications`로 옮기면 다른 앱처럼 관리할 수 있습니다.
 
 빌드 단계가 필요 없습니다 — 앱이 자체 Python 런타임과 ffmpeg를 함께 담고 있습니다.
 
