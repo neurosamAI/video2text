@@ -1,13 +1,11 @@
 baseURL = 'https://video2text.neurosam.ai/'
-languageCode = 'ko-KR'
-title = 'video2text — 완전 로컬 화자 분리 전사 앱 | by neurosam.AI (뉴로샘AI)'
 theme = 'neurosam-docs'
 enableRobotsTXT = false
+defaultContentLanguage = 'en'
+defaultContentLanguageInSubdir = false
 
 [params]
-  description = 'video2text는 mp4 영상/오디오 파일을 화자 분리(diarization)된 텍스트 전사본으로 바꿔주는 완전 로컬 macOS(Apple Silicon) 앱입니다 — neurosam.AI(법인명 (주)뉴로샘에이아이 / 영문 Neurosam AI Inc. / 약칭 뉴로샘AI)가 만들고 관리합니다. MIT 라이선스 오픈소스.'
   author = 'Neurosam AI Team'
-  keywords = 'video2text,neurosam.AI,neurosam.ai,Neurosam AI,Neurosam AI Inc.,뉴로샘에이아이,(주)뉴로샘에이아이,뉴로샘AI,뉴로샘,transcription,전사,speaker diarization,화자분리,Whisper,mlx-whisper,pyannote,macOS,Apple Silicon,privacy,프라이버시,open source,오픈소스,MIT'
   version = 'v1.0.0'
   github = 'https://github.com/neurosamAI/video2text'
   mainSiteURL = 'https://neurosam.ai'
@@ -18,35 +16,84 @@ enableRobotsTXT = false
   plausible_domain = ''
   clarity_id = 'x00bpbkmbw'
 
-[params.nav]
-  [[params.nav.items]]
-    title = 'Home'
-    url = '/'
+[languages]
+  [languages.en]
+    languageCode = 'en'
+    languageName = 'English'
     weight = 1
-  [[params.nav.items]]
-    title = 'Getting Started'
-    url = '/docs/getting-started/'
+    title = 'video2text — Fully Local, Speaker-Diarized Transcription | by neurosam.AI (뉴로샘AI)'
+    [languages.en.params]
+      description = 'video2text is a fully local macOS (Apple Silicon) app that turns an mp4 video or audio file into a speaker-diarized transcript — built and maintained by neurosam.AI (Neurosam AI Inc. / 뉴로샘AI). Open source under MIT.'
+      keywords = 'video2text,neurosam.AI,neurosam.ai,Neurosam AI,Neurosam AI Inc.,transcription,speaker diarization,Whisper,mlx-whisper,pyannote,macOS,Apple Silicon,privacy,open source,MIT'
+      tagline = 'Fully local, speaker-diarized transcripts'
+    [languages.en.params.nav]
+      [[languages.en.params.nav.items]]
+        title = 'Home'
+        url = '/'
+        weight = 1
+      [[languages.en.params.nav.items]]
+        title = 'Getting Started'
+        url = '/docs/getting-started/'
+        weight = 2
+      [[languages.en.params.nav.items]]
+        title = 'How It Works'
+        url = '/docs/how-it-works/'
+        weight = 3
+      [[languages.en.params.nav.items]]
+        title = 'Usage'
+        url = '/docs/usage/'
+        weight = 4
+      [[languages.en.params.nav.items]]
+        title = 'Privacy & Security'
+        url = '/docs/privacy-security/'
+        weight = 5
+      [[languages.en.params.nav.items]]
+        title = 'Troubleshooting'
+        url = '/docs/troubleshooting/'
+        weight = 6
+      [[languages.en.params.nav.items]]
+        title = 'License'
+        url = '/docs/license/'
+        weight = 7
+
+  [languages.ko]
+    languageCode = 'ko-KR'
+    languageName = '한국어'
     weight = 2
-  [[params.nav.items]]
-    title = 'How It Works'
-    url = '/docs/how-it-works/'
-    weight = 3
-  [[params.nav.items]]
-    title = 'Usage'
-    url = '/docs/usage/'
-    weight = 4
-  [[params.nav.items]]
-    title = 'Privacy & Security'
-    url = '/docs/privacy-security/'
-    weight = 5
-  [[params.nav.items]]
-    title = 'Troubleshooting'
-    url = '/docs/troubleshooting/'
-    weight = 6
-  [[params.nav.items]]
-    title = 'License'
-    url = '/docs/license/'
-    weight = 7
+    title = 'video2text — 완전 로컬 화자 분리 전사 앱 | by neurosam.AI (뉴로샘AI)'
+    [languages.ko.params]
+      description = 'video2text는 mp4 영상/오디오 파일을 화자 분리(diarization)된 텍스트 전사본으로 바꿔주는 완전 로컬 macOS(Apple Silicon) 앱입니다 — neurosam.AI(법인명 (주)뉴로샘에이아이 / 영문 Neurosam AI Inc. / 약칭 뉴로샘AI)가 만들고 관리합니다. MIT 라이선스 오픈소스.'
+      keywords = 'video2text,neurosam.AI,neurosam.ai,Neurosam AI,Neurosam AI Inc.,뉴로샘에이아이,(주)뉴로샘에이아이,뉴로샘AI,뉴로샘,전사,화자분리,Whisper,mlx-whisper,pyannote,macOS,Apple Silicon,프라이버시,오픈소스,MIT'
+      tagline = '완전 로컬 화자 분리 전사'
+    [languages.ko.params.nav]
+      [[languages.ko.params.nav.items]]
+        title = '홈'
+        url = '/ko/'
+        weight = 1
+      [[languages.ko.params.nav.items]]
+        title = '시작하기'
+        url = '/ko/docs/getting-started/'
+        weight = 2
+      [[languages.ko.params.nav.items]]
+        title = '동작 원리'
+        url = '/ko/docs/how-it-works/'
+        weight = 3
+      [[languages.ko.params.nav.items]]
+        title = '사용법'
+        url = '/ko/docs/usage/'
+        weight = 4
+      [[languages.ko.params.nav.items]]
+        title = '프라이버시 & 보안'
+        url = '/ko/docs/privacy-security/'
+        weight = 5
+      [[languages.ko.params.nav.items]]
+        title = '문제 해결'
+        url = '/ko/docs/troubleshooting/'
+        weight = 6
+      [[languages.ko.params.nav.items]]
+        title = '라이선스'
+        url = '/ko/docs/license/'
+        weight = 7
 
 [sitemap]
   changefreq = 'weekly'
