@@ -21,10 +21,15 @@ class Api:
     def pick_video(self):
         import webview
 
+        from . import i18n
+
         result = webview.windows[0].create_file_dialog(
             webview.OPEN_DIALOG,
             allow_multiple=False,
-            file_types=("동영상 오디오 (*.mp4;*.mov;*.m4v;*.mkv;*.wav;*.m4a;*.mp3)", "모든 파일 (*.*)"),
+            file_types=(
+                i18n.t("file_picker_media_types"),
+                i18n.t("file_picker_all_types"),
+            ),
         )
         return result[0] if result else None
 

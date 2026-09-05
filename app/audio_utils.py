@@ -2,7 +2,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from . import config
+from . import config, i18n
 
 
 def _find_binary(name: str) -> str:
@@ -14,7 +14,7 @@ def _find_binary(name: str) -> str:
     found = shutil.which(name)
     if found:
         return found
-    raise RuntimeError(f"{name}를 찾을 수 없습니다. `brew install ffmpeg`로 설치해주세요.")
+    raise RuntimeError(i18n.t("ffmpeg_not_found", name=name))
 
 
 def extract_wav(input_path: Path, output_path: Path, sample_rate: int = 16000) -> Path:

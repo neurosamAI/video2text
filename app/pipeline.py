@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Callable
 
-from . import audio_utils, config, diarize as diarize_mod, merge, render
+from . import audio_utils, config, diarize as diarize_mod, i18n, merge, render
 from . import speaker_profiles, transcribe as transcribe_mod
 from .errors import JobCancelled
 
@@ -48,9 +48,7 @@ def _fmt_hms(seconds: float) -> str:
 def _load_raw_segments(source_job_id: str) -> dict:
     raw_path = config.OUTPUT_DIR / source_job_id / RAW_SEGMENTS_FILENAME
     if not raw_path.exists():
-        raise RuntimeError(
-            "이 작업에 필요한 원본 데이터가 없습니다 (예전 버전에서 만든 작업이거나 이미 삭제된 작업입니다)."
-        )
+        raise RuntimeError(i18n.t("raw_segments_missing"))
     return json.loads(raw_path.read_text())
 
 
@@ -77,7 +75,7 @@ def _render_and_deliver(
     be given, so every job in a rematch/relabel chain still has an audio
     file available for a future rematch, without ever duplicating it.
     """
-    update(status="merging", progress=92, message="결과 정리 중...")
+    update(status="merging", progress=92, message=i18n.t("merging_results"))
     assigned = merge.assign_speakers(transcript_segments, diarization_segments)
     blocks = merge.group_by_speaker(assigned)
 
@@ -108,7 +106,7 @@ def _render_and_deliver(
     update(
         status="done",
         progress=100,
-        message="완료",
+        message=i18n.t("done"),
         result={
             "txt": txt_path.name,
             "srt": srt_path.name,
@@ -142,7 +140,7 @@ def run_job(
     out_dir.mkdir(parents=True, exist_ok=True)
     wav_path = out_dir / "audio.wav"
 
-    update(status="extracting_audio", progress=5, message="오디오 추출 중...")
+    update(status="extracting_audio", progress=5, message=i18n.t("extracting_audio"))
     audio_utils.extract_wav(input_path, wav_path)
     check_cancelled()
 
@@ -156,7 +154,7 @@ def run_job(
     # else: this path was handed to us directly by the desktop app's native
     # file picker and belongs to the user — never delete or move it.
 
-    update(status="diarizing", progress=15, message="화자 분리 중... (파일 길이에 따라 시간이 걸릴 수 있습니다)")
+    update(status="diarizing", progress=15, message=i18n.t("diarizing"))
 
     def hook(step_name, step_artifact, file=None, total=None, completed=None):
         check_cancelled()
@@ -164,7 +162,7 @@ def run_job(
             frac = completed / total
             update(
                 progress=15 + int(frac * 35),
-                message=f"화자 분리 중... {int(frac * 100)}% ({step_name})",
+                message=i18n.t("diarizing_progress", pct=int(frac * 100), step=step_name),
             )
 
     diarization_segments = diarize_mod.diarize(
@@ -172,20 +170,25 @@ def run_job(
     )
     check_cancelled()
 
-    update(status="diarizing", progress=48, message="화자 그룹 정리 중...")
+    update(status="diarizing", progress=48, message=i18n.t("consolidating_speakers"))
     diarization_segments, speaker_merges = speaker_profiles.consolidate_fragmented_speakers(
         wav_path, diarization_segments
     )
     _release_ml_memory()
 
-    update(status="transcribing", progress=50, message="음성 인식(전사) 중... 0%")
+    update(status="transcribing", progress=50, message=i18n.t("transcribing_start"))
 
     def transcribe_progress(processed_seconds, total_seconds):
         frac = processed_seconds / total_seconds if total_seconds else 1.0
         pct = int(frac * 100)
         update(
             progress=50 + int(frac * 35),
-            message=f"음성 인식(전사) 중... {pct}% ({_fmt_hms(processed_seconds)} / {_fmt_hms(total_seconds)})",
+            message=i18n.t(
+                "transcribing_progress",
+                pct=pct,
+                elapsed=_fmt_hms(processed_seconds),
+                total=_fmt_hms(total_seconds),
+            ),
         )
 
     transcript_segments = transcribe_mod.transcribe(
@@ -211,7 +214,7 @@ def run_job(
         )
     )
 
-    update(status="matching_speakers", progress=85, message="화자 매칭 중...")
+    update(status="matching_speakers", progress=85, message=i18n.t("matching_speakers"))
     speaker_names, match_debug = speaker_profiles.match_speakers_debug(
         wav_path, diarization_segments, profile_ids
     )
@@ -247,10 +250,7 @@ def rematch_job(
 
     wav_path = Path(wav_saved_path)
     if not wav_path.exists():
-        raise RuntimeError(
-            "재매칭에 필요한 오디오 파일을 찾을 수 없습니다 "
-            f"({wav_path.name}이 결과 저장 위치에서 옮겨졌거나 삭제된 것 같습니다)."
-        )
+        raise RuntimeError(i18n.t("rematch_audio_missing_file", filename=wav_path.name))
 
     raw = _load_raw_segments(source_job_id)
     diarization_segments = raw["diarization_segments"]
@@ -265,13 +265,13 @@ def rematch_job(
     shutil.copyfile(config.OUTPUT_DIR / source_job_id / RAW_SEGMENTS_FILENAME, out_dir / RAW_SEGMENTS_FILENAME)
     check_cancelled()
 
-    update(status="matching_speakers", progress=40, message="화자 그룹 정리 중...")
+    update(status="matching_speakers", progress=40, message=i18n.t("consolidating_speakers"))
     diarization_segments, speaker_merges = speaker_profiles.consolidate_fragmented_speakers(
         wav_path, diarization_segments
     )
     check_cancelled()
 
-    update(status="matching_speakers", progress=50, message="화자 매칭 재계산 중...")
+    update(status="matching_speakers", progress=50, message=i18n.t("recomputing_match"))
     speaker_names, match_debug = speaker_profiles.match_speakers_debug(
         wav_path, diarization_segments, profile_ids
     )
@@ -306,7 +306,7 @@ def relabel_job(
     out_dir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(config.OUTPUT_DIR / source_job_id / RAW_SEGMENTS_FILENAME, out_dir / RAW_SEGMENTS_FILENAME)
 
-    update(status="merging", progress=50, message="이름 반영 중...")
+    update(status="merging", progress=50, message=i18n.t("applying_names"))
     _render_and_deliver(
         job_id, out_dir, original_filename, diarization_segments, transcript_segments, speaker_names, {},
         update, existing_wav_saved_path=wav_saved_path,

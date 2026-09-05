@@ -9,7 +9,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import audio_utils, config, jobs, speaker_profiles
+from . import audio_utils, config, i18n, jobs, speaker_profiles
 
 app = FastAPI(title="video2text")
 
@@ -41,14 +41,14 @@ async def create_job(
         # file belongs to the user, not to us: never delete or move it.
         path = Path(local_path).expanduser()
         if not path.is_file():
-            raise HTTPException(400, "파일을 찾을 수 없습니다.")
+            raise HTTPException(400, i18n.t("file_not_found"))
         real_job_id = jobs.create_job(
             path, path.name, ids, owns_file=False, min_speakers=min_speakers, max_speakers=max_speakers
         )
         return {"job_id": real_job_id}
 
     if not file:
-        raise HTTPException(400, "file 또는 local_path 중 하나가 필요합니다.")
+        raise HTTPException(400, i18n.t("file_or_local_path_required"))
 
     job_id = uuid.uuid4().hex[:12]
     upload_dir = config.UPLOAD_DIR / job_id
@@ -79,7 +79,7 @@ def list_jobs(offset: int = 0, limit: int = 10):
 def delete_job(job_id: str):
     result = jobs.delete_job(job_id)
     if result is None:
-        raise HTTPException(400, "진행 중인 작업은 삭제할 수 없습니다. 먼저 취소해주세요.")
+        raise HTTPException(400, i18n.t("cannot_delete_running_job"))
     if result is False:
         raise HTTPException(404, "job not found")
     return {"ok": True}
@@ -96,7 +96,7 @@ def get_job(job_id: str):
 @app.post("/api/jobs/{job_id}/cancel")
 def cancel_job(job_id: str):
     if not jobs.cancel_job(job_id):
-        raise HTTPException(400, "취소할 수 없는 작업입니다 (이미 끝났거나 존재하지 않음).")
+        raise HTTPException(400, i18n.t("cannot_cancel_job"))
     return {"ok": True}
 
 
@@ -107,7 +107,7 @@ def rematch_job(job_id: str, profile_ids: str = Form("")):
     only the match-sensitivity setting or selected profiles changed."""
     source = jobs.get_job(job_id)
     if not source or source.get("status") != "done":
-        raise HTTPException(400, "완료된 작업만 재매칭할 수 있습니다.")
+        raise HTTPException(400, i18n.t("rematch_requires_done"))
     ids = [p for p in profile_ids.split(",") if p] or None
     new_job_id = jobs.create_rematch_job(job_id, ids)
     if new_job_id is None:
@@ -124,13 +124,13 @@ def relabel_job(job_id: str, overrides: str = Form(...)):
     label not mentioned keeps its current name."""
     source = jobs.get_job(job_id)
     if not source or source.get("status") != "done" or not source.get("result"):
-        raise HTTPException(400, "완료된 작업만 이름을 수정할 수 있습니다.")
+        raise HTTPException(400, i18n.t("relabel_requires_done"))
     try:
         parsed_overrides = json.loads(overrides)
         if not isinstance(parsed_overrides, dict):
             raise ValueError
     except ValueError:
-        raise HTTPException(400, "overrides는 JSON 객체여야 합니다.")
+        raise HTTPException(400, i18n.t("overrides_must_be_object"))
 
     speaker_names = dict(source["result"].get("speakers") or {})
     speaker_names.update(parsed_overrides)
@@ -229,6 +229,8 @@ def get_settings():
         "result_save_dir": str(config.RESULT_SAVE_DIR),
         "speaker_match_threshold": config.SPEAKER_MATCH_THRESHOLD,
         "speaker_consolidation_threshold": config.SPEAKER_CONSOLIDATION_THRESHOLD,
+        "ui_language": config.UI_LANGUAGE,
+        "effective_language": i18n.effective_language(),
     }
 
 
@@ -238,6 +240,7 @@ def save_settings(
     result_save_dir: str | None = Form(None),
     speaker_match_threshold: float | None = Form(None),
     speaker_consolidation_threshold: float | None = Form(None),
+    ui_language: str | None = Form(None),
 ):
     if hf_token is not None and hf_token.strip():
         token = hf_token.strip()
@@ -249,21 +252,27 @@ def save_settings(
         try:
             path.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            raise HTTPException(400, f"폴더를 만들 수 없습니다: {e}")
+            raise HTTPException(400, i18n.t("cannot_create_folder", error=e))
         _persist_env_var("RESULT_SAVE_DIR", str(path))
         config.RESULT_SAVE_DIR = path
 
     if speaker_match_threshold is not None:
         if not (0.0 <= speaker_match_threshold <= 1.0):
-            raise HTTPException(400, "임계값은 0~1 사이여야 합니다.")
+            raise HTTPException(400, i18n.t("threshold_range"))
         _persist_env_var("SPEAKER_MATCH_THRESHOLD", str(speaker_match_threshold))
         config.SPEAKER_MATCH_THRESHOLD = speaker_match_threshold
 
     if speaker_consolidation_threshold is not None:
         if not (0.0 <= speaker_consolidation_threshold <= 1.0):
-            raise HTTPException(400, "임계값은 0~1 사이여야 합니다.")
+            raise HTTPException(400, i18n.t("threshold_range"))
         _persist_env_var("SPEAKER_CONSOLIDATION_THRESHOLD", str(speaker_consolidation_threshold))
         config.SPEAKER_CONSOLIDATION_THRESHOLD = speaker_consolidation_threshold
+
+    if ui_language is not None:
+        if ui_language not in ("system", "ko", "en"):
+            raise HTTPException(400, "ui_language must be 'system', 'ko', or 'en'")
+        _persist_env_var("UI_LANGUAGE", ui_language)
+        config.UI_LANGUAGE = ui_language
 
     return {"ok": True}
 
@@ -275,6 +284,6 @@ def reveal(path: str = Form(...)):
     response and can leave it stuck there."""
     target = Path(path)
     if not target.exists():
-        raise HTTPException(404, "경로를 찾을 수 없습니다.")
+        raise HTTPException(404, i18n.t("path_not_found"))
     subprocess.run(["open", "-R", str(target)])
     return {"ok": True}

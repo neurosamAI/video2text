@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import config
+from . import config, i18n
 from .embedding import cosine_similarity, embed_segment
 
 
@@ -78,7 +78,7 @@ def add_profile(name: str, wav_path: Path, original_filename: str | None = None)
     """
     embedding = embed_segment(wav_path)
     if embedding is None:
-        raise ValueError("샘플 오디오가 너무 짧거나 무음입니다. 최소 5~10초 분량의 음성이 필요합니다.")
+        raise ValueError(i18n.t("sample_too_short"))
 
     now = datetime.now().isoformat(timespec="seconds")
     audio_filename = f"{uuid.uuid4().hex}.wav"
@@ -332,7 +332,7 @@ def match_speakers_debug(
     counter = 1
     for label in raw_labels:
         if label not in mapping:
-            mapping[label] = f"화자 {counter}"
+            mapping[label] = i18n.t("speaker_n", n=counter)
             counter += 1
 
     return mapping, debug

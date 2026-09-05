@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 import torch
 
-from . import config
+from . import config, i18n
 
 
 def _get_device() -> torch.device:
@@ -19,10 +19,7 @@ def _load_pipeline():
     from pyannote.audio import Pipeline
 
     if not config.HF_TOKEN:
-        raise RuntimeError(
-            "HF_TOKEN이 설정되지 않았습니다. .env 파일에 HuggingFace 토큰을 설정하세요 "
-            "(README.md의 화자분리 모델 접근 권한 안내를 참고하세요)."
-        )
+        raise RuntimeError(i18n.t("hf_token_not_set"))
     pipeline = Pipeline.from_pretrained(
         config.DIARIZATION_MODEL, use_auth_token=config.HF_TOKEN
     )

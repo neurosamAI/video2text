@@ -27,6 +27,11 @@ HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "mlx-community/whisper-large-v3-turbo")
 WHISPER_LANGUAGE = os.environ.get("WHISPER_LANGUAGE", "ko")
 
+# UI language: "system" (follow the Mac's preferred language), "ko", or "en".
+# Separate from WHISPER_LANGUAGE above, which controls what language speech
+# is transcribed into — this only controls the app's own interface text.
+UI_LANGUAGE = os.environ.get("UI_LANGUAGE", "system")
+
 DIARIZATION_MODEL = "pyannote/speaker-diarization-3.1"
 EMBEDDING_MODEL = "speechbrain/spkrec-ecapa-voxceleb"
 

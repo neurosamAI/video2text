@@ -9,12 +9,9 @@ function escapeHtml(str) {
 let selectedFile = null;
 const expandedRelabelPanels = new Set();
 
-const READ_SCRIPT =
-  "안녕하세요. 제 목소리를 등록하기 위해 이 문장을 읽고 있습니다. " +
-  "오늘 회의에서는 프로젝트 진행 상황과 다음 분기 계획에 대해 이야기하려고 합니다. " +
-  "날씨가 좋아서 그런지 오늘따라 기분이 좋네요. 하나, 둘, 셋, 넷, 다섯까지 세어 보겠습니다.";
-
-$("#readScript").textContent = READ_SCRIPT;
+function renderReadScript() {
+  $("#readScript").textContent = t("readScript");
+}
 
 // ---------- Settings ----------
 
@@ -22,23 +19,34 @@ async function loadSettings() {
   const res = await fetch("/api/settings");
   const s = await res.json();
 
+  setLang(s.effective_language || "ko");
+  applyStaticI18n();
+  renderReadScript();
+  $("#uiLanguageSelect").value = s.ui_language || "system";
+
   const status = $("#settingsStatus");
   const form = $("#settingsForm");
   if (s.hf_token_set) {
-    status.textContent = `✅ 화자 분리 사용 가능 (토큰 ${s.hf_token_preview})`;
+    status.textContent = t("statusAvailable", s.hf_token_preview);
   } else {
-    status.textContent = "⚠️ 토큰이 설정되지 않았습니다. 화자 분리 없이는 변환이 되지 않습니다.";
+    status.textContent = t("statusNotSet");
   }
   form.style.display = "flex";
 
   $("#saveDirInput").placeholder = s.result_save_dir;
-  $("#saveDirCurrent").textContent = `현재: ${s.result_save_dir}`;
+  $("#saveDirCurrent").textContent = t("currentPrefix", s.result_save_dir);
 
   $("#thresholdInput").value = s.speaker_match_threshold;
   $("#thresholdValue").textContent = Math.round(s.speaker_match_threshold * 100) + "%";
 
   $("#consolidationThresholdInput").value = s.speaker_consolidation_threshold;
   $("#consolidationThresholdValue").textContent = Math.round(s.speaker_consolidation_threshold * 100) + "%";
+
+  // Re-render anything already on screen that carries translated text, now
+  // that we know the real language (the very first paint before this
+  // resolves used the default "ko" strings).
+  loadProfiles();
+  loadJobs();
 }
 
 $("#saveTokenBtn").addEventListener("click", async () => {
@@ -48,7 +56,7 @@ $("#saveTokenBtn").addEventListener("click", async () => {
   fd.append("hf_token", token);
   const res = await fetch("/api/settings", { method: "POST", body: fd });
   if (!res.ok) {
-    alert("저장 실패");
+    alert(t("alertSaveFailed"));
     return;
   }
   $("#hfTokenInput").value = "";
@@ -62,8 +70,8 @@ $("#saveDirBtn").addEventListener("click", async () => {
   fd.append("result_save_dir", dir);
   const res = await fetch("/api/settings", { method: "POST", body: fd });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "저장 실패" }));
-    alert(err.detail || "저장 실패");
+    const err = await res.json().catch(() => ({ detail: t("alertSaveFailed") }));
+    alert(err.detail || t("alertSaveFailed"));
     return;
   }
   $("#saveDirInput").value = "";
@@ -92,6 +100,13 @@ $("#thresholdInput").addEventListener("input", (e) => {
   $("#thresholdValue").textContent = Math.round(parseFloat(e.target.value) * 100) + "%";
 });
 
+$("#uiLanguageSelect").addEventListener("change", async (e) => {
+  const fd = new FormData();
+  fd.append("ui_language", e.target.value);
+  await fetch("/api/settings", { method: "POST", body: fd });
+  loadSettings();
+});
+
 // ---------- Speaker profiles ----------
 
 const expandedProfiles = new Set();
@@ -103,24 +118,24 @@ async function loadProfiles() {
   const list = $("#profileList");
   list.innerHTML = "";
   if (profiles.length === 0) {
-    list.innerHTML = '<span class="muted">등록된 프로필이 없습니다.</span>';
+    list.innerHTML = `<span class="muted">${t("noProfilesRegistered")}</span>`;
   }
   for (const p of profiles) {
     const row = document.createElement("div");
     row.className = "profile-row";
-    const sampleNote = p.samples > 1 ? ` (${p.samples}개 샘플)` : "";
+    const sampleNote = p.samples > 1 ? t("samplesCountSuffix", p.samples) : "";
     row.innerHTML = `
       <div class="profile-row-top">
         <span>👤 ${escapeHtml(p.name)}${escapeHtml(sampleNote)}</span>
         <span>
-          <button class="secondary manage-btn" data-id="${escapeHtml(p.id)}">샘플 관리</button>
+          <button class="secondary manage-btn" data-id="${escapeHtml(p.id)}">${t("manageSamplesBtn")}</button>
           <span class="del" data-id="${escapeHtml(p.id)}">✕</span>
         </span>
       </div>
       <div class="sample-list" data-id="${escapeHtml(p.id)}" hidden></div>
     `;
     row.querySelector(".del").addEventListener("click", async () => {
-      if (!confirm(`"${p.name}" 프로필을 삭제할까요? (등록된 샘플 ${p.samples}개 전부 삭제됩니다)`)) return;
+      if (!confirm(t("confirmDeleteProfile", p.name, p.samples))) return;
       await fetch(`/api/speakers/${p.id}`, { method: "DELETE" });
       loadProfiles();
     });
@@ -140,7 +155,7 @@ async function loadProfiles() {
     const label = document.createElement("div");
     label.className = "muted";
     label.style.width = "100%";
-    label.textContent = "이번 변환에서 자동 매칭할 프로필:";
+    label.textContent = t("matchProfilesLabel");
     match.appendChild(label);
   }
   for (const p of profiles) {
@@ -164,7 +179,7 @@ function toggleSampleList(profileId, btn) {
 function hideSampleList(profileId, btn) {
   const el = document.querySelector(`.sample-list[data-id="${profileId}"]`);
   if (el) el.hidden = true;
-  if (btn) btn.textContent = "샘플 관리 ▾";
+  if (btn) btn.textContent = t("manageSamplesBtnCollapsed");
   expandedProfiles.delete(profileId);
 }
 
@@ -172,13 +187,13 @@ async function showSampleList(profileId, btn) {
   const el = document.querySelector(`.sample-list[data-id="${profileId}"]`);
   if (!el) return;
   expandedProfiles.add(profileId);
-  if (btn) btn.textContent = "샘플 관리 ▴ (접기)";
+  if (btn) btn.textContent = t("manageSamplesBtnExpanded");
 
   const res = await fetch(`/api/speakers/${profileId}/samples`);
   const samples = await res.json();
   el.innerHTML = samples
     .map((s) => {
-      const label = s.original_filename ? escapeHtml(s.original_filename) : `샘플 ${escapeHtml(s.index + 1)}`;
+      const label = s.original_filename ? escapeHtml(s.original_filename) : escapeHtml(t("samplePrefix", s.index + 1));
       const audio = s.has_audio
         ? `<audio controls preload="none" src="/api/speakers/${escapeHtml(encodeURIComponent(profileId))}/samples/${escapeHtml(s.index)}/audio"></audio>`
         : "";
@@ -196,7 +211,7 @@ async function showSampleList(profileId, btn) {
 
   el.querySelectorAll(".sample-del").forEach((delBtn) => {
     delBtn.addEventListener("click", async () => {
-      if (!confirm("이 샘플을 삭제할까요?")) return;
+      if (!confirm(t("confirmDeleteSample"))) return;
       await fetch(`/api/speakers/${delBtn.dataset.id}/samples/${delBtn.dataset.index}`, { method: "DELETE" });
       loadProfiles();
     });
@@ -213,8 +228,8 @@ async function enrollFromBlob(blob, filename, name) {
   fd.append("file", blob, filename);
   const res = await fetch("/api/speakers", { method: "POST", body: fd });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "등록 실패" }));
-    alert(err.detail || "등록 실패");
+    const err = await res.json().catch(() => ({ detail: t("alertRegisterFailed") }));
+    alert(err.detail || t("alertRegisterFailed"));
     return;
   }
   $("#profileName").value = "";
@@ -224,7 +239,7 @@ async function enrollFromBlob(blob, filename, name) {
 $("#profileFile").addEventListener("change", (e) => {
   const name = $("#profileName").value.trim();
   if (!name) {
-    alert("먼저 이름을 입력하세요.");
+    alert(t("alertEnterNameFirst"));
     e.target.value = "";
     return;
   }
@@ -265,8 +280,8 @@ let selectedLocalPath = null;
 function setSelectedFile(file) {
   selectedFile = file;
   selectedLocalPath = null;
-  $("#dropzoneText").textContent = `선택됨: ${file.name}`;
-  $("#selectedFile").textContent = `${(file.size / 1e6).toFixed(1)} MB (복사됨)`;
+  $("#dropzoneText").textContent = t("selectedPrefix", file.name);
+  $("#selectedFile").textContent = t("mbCopiedSuffix", (file.size / 1e6).toFixed(1));
   $("#uploadBtn").disabled = false;
 }
 
@@ -274,8 +289,8 @@ function setSelectedLocalPath(path) {
   selectedFile = null;
   selectedLocalPath = path;
   const name = path.split("/").pop();
-  $("#dropzoneText").textContent = `선택됨: ${name}`;
-  $("#selectedFile").textContent = "복사 없이 원본 위치에서 바로 사용";
+  $("#dropzoneText").textContent = t("selectedPrefix", name);
+  $("#selectedFile").textContent = t("noCopyLocalUse");
   $("#uploadBtn").disabled = false;
 }
 
@@ -294,7 +309,7 @@ $("#pickNativeBtn").addEventListener("click", async () => {
     const path = await window.pywebview.api.pick_video();
     if (path) setSelectedLocalPath(path);
   } catch (e) {
-    alert("파일 선택 실패: " + e.message);
+    alert(t("alertFileSelectFailedPrefix") + e.message);
   }
 });
 
@@ -317,30 +332,18 @@ $("#uploadBtn").addEventListener("click", async () => {
     if (!res.ok) throw new Error(await res.text());
     selectedFile = null;
     selectedLocalPath = null;
-    $("#dropzoneText").textContent = "mp4 파일을 여기로 드래그하거나 클릭해서 선택하세요";
+    $("#dropzoneText").textContent = t("dropzoneDefault");
     $("#selectedFile").textContent = "";
     fileInput.value = "";
     loadJobs();
   } catch (e) {
-    alert("업로드 실패: " + e.message);
+    alert(t("alertUploadFailedPrefix") + e.message);
   } finally {
     $("#uploadBtn").disabled = false;
   }
 });
 
 // ---------- Jobs ----------
-
-const STATUS_LABEL = {
-  queued: "대기 중",
-  extracting_audio: "오디오 추출 중",
-  diarizing: "화자 분리 중",
-  transcribing: "전사 중",
-  matching_speakers: "화자 매칭 중",
-  merging: "정리 중",
-  done: "완료",
-  error: "오류",
-  cancelled: "취소됨",
-};
 
 const ACTIVE_STATUSES = new Set([
   "queued",
@@ -351,22 +354,18 @@ const ACTIVE_STATUSES = new Set([
   "merging",
 ]);
 
-const STEPS = [
-  { key: "extracting_audio", icon: "🎧", label: "오디오 추출" },
-  { key: "diarizing", icon: "🗣️", label: "화자 분리" },
-  { key: "transcribing", icon: "✍️", label: "음성 인식" },
-  { key: "matching_speakers", icon: "🪪", label: "화자 매칭" },
-  { key: "done", icon: "✅", label: "완료" },
-];
+const STEP_KEYS = ["extracting_audio", "diarizing", "transcribing", "matching_speakers", "done"];
+const STEP_ICONS = { extracting_audio: "🎧", diarizing: "🗣️", transcribing: "✍️", matching_speakers: "🪪", done: "✅" };
 
 function renderStepTracker(job) {
   // "merging" belongs conceptually between matching_speakers and done
   const effectiveStatus = job.status === "merging" ? "matching_speakers" : job.status;
-  const currentIdx = STEPS.findIndex((s) => s.key === effectiveStatus);
+  const currentIdx = STEP_KEYS.findIndex((k) => k === effectiveStatus);
+  const stepLabels = I18N[getLang()].stepLabel;
 
-  return `<div class="step-tracker">${STEPS.map((s, i) => {
+  return `<div class="step-tracker">${STEP_KEYS.map((key, i) => {
     let cls = "step";
-    let icon = s.icon;
+    let icon = STEP_ICONS[key];
     if (job.status === "error" && i === Math.max(currentIdx, 0)) {
       cls += " error";
       icon = "⚠️";
@@ -378,7 +377,7 @@ function renderStepTracker(job) {
     } else if (i === currentIdx) {
       cls += " active";
     }
-    return `<div class="${cls}"><div class="dot">${icon}</div><div class="label">${s.label}</div></div>`;
+    return `<div class="${cls}"><div class="dot">${icon}</div><div class="label">${stepLabels[key]}</div></div>`;
   }).join("")}</div>`;
 }
 
@@ -419,7 +418,7 @@ async function loadJobs() {
   const container = $("#jobs");
   container.innerHTML = "";
   if (total === 0) {
-    container.innerHTML = '<span class="muted">아직 작업이 없습니다.</span>';
+    container.innerHTML = `<span class="muted">${t("noJobsYet")}</span>`;
     $("#jobsPagination").innerHTML = "";
     return;
   }
@@ -428,6 +427,7 @@ async function loadJobs() {
     jobsOffset = Math.max(0, jobsOffset - JOBS_PAGE_SIZE);
     return loadJobs();
   }
+  const statusLabels = I18N[getLang()].statusLabel;
   for (const job of jobs) {
     const el = document.createElement("div");
     el.className = "job";
@@ -443,12 +443,12 @@ async function loadJobs() {
           const filename = path.split("/").pop();
           return `<div class="saved-file">
             <span>${escapeHtml(filename)}</span>
-            <button class="secondary reveal-btn" data-path="${escapeHtml(path)}">Finder에서 보기</button>
+            <button class="secondary reveal-btn" data-path="${escapeHtml(path)}">${t("revealInFinderBtn")}</button>
           </div>`;
         })
         .join("");
       savedInfo = `<div class="saved-info">
-        📁 저장 위치: ${escapeHtml(job.result.saved_dir)}
+        ${escapeHtml(t("savedLocationPrefix", job.result.saved_dir))}
         ${fileRows}
       </div>`;
 
@@ -456,9 +456,9 @@ async function loadJobs() {
       const unmatched = Object.values(debug).filter((d) => !d.matched);
       if (unmatched.length > 0) {
         const lines = unmatched
-          .map((d) => `가장 가까운 후보 "${escapeHtml(d.closest_profile)}"와 ${Math.round(d.score * 100)}% 유사 (기준 ${Math.round(d.threshold * 100)}% 미달)`)
+          .map((d) => t("unmatchedSpeakerLine", escapeHtml(d.closest_profile), Math.round(d.score * 100), Math.round(d.threshold * 100)))
           .join("<br>");
-        savedInfo += `<div class="match-note">⚠️ 자동 매칭 안 된 화자가 있습니다:<br>${lines}<br>비슷한데 안 붙는다면 위 "설정 → 화자 매칭 민감도"를 낮춰보세요.</div>`;
+        savedInfo += `<div class="match-note">${t("unmatchedSpeakersBlock", lines)}</div>`;
       }
 
       const merges = job.result.speaker_merges || {};
@@ -466,9 +466,9 @@ async function loadJobs() {
       if (mergeEntries.length > 0) {
         const speakers = job.result.speakers || {};
         const lines = mergeEntries
-          .map(([canonical, absorbed]) => `"${escapeHtml(speakers[canonical] || canonical)}"로 원시 라벨 ${absorbed.length}개(${escapeHtml(absorbed.join(", "))}) 통합됨`)
+          .map(([canonical, absorbed]) => t("mergeLine", escapeHtml(speakers[canonical] || canonical), absorbed.length, escapeHtml(absorbed.join(", "))))
           .join("<br>");
-        savedInfo += `<div class="match-note">🔗 같은 사람인데 화자 분리가 여러 번호로 쪼갠 것을 자동으로 합쳤습니다:<br>${lines}<br>잘못 합쳐진 것 같으면 위 "설정 → 화자 그룹 통합 민감도"를 높여서 다시 매칭해보세요.</div>`;
+        savedInfo += `<div class="match-note">${t("mergeBlock", lines)}</div>`;
       }
     }
 
@@ -476,16 +476,16 @@ async function loadJobs() {
     el.innerHTML = `
       <div class="job-top">
         <div class="job-name">${escapeHtml(job.filename)}</div>
-        <div class="status-badge ${badgeClass}">${STATUS_LABEL[job.status] || job.status}</div>
+        <div class="status-badge ${badgeClass}">${statusLabels[job.status] || job.status}</div>
       </div>
       ${showTracker ? renderStepTracker(job) : ""}
       <div class="progress-bar"><div style="width:${job.progress || 0}%"></div></div>
       <div class="job-message">${escapeHtml(job.error ? job.error.split("\n")[0] : job.message || "")} (${job.progress || 0}%)</div>
       <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        ${isActive ? `<button class="danger cancel-btn" data-job-id="${escapeHtml(job.id)}">작업 취소</button>` : ""}
-        ${job.status === "done" && job.result && job.result.can_rematch ? `<button class="secondary rematch-btn" data-job-id="${escapeHtml(job.id)}">현재 설정으로 재매칭</button>` : ""}
-        ${job.status === "done" && job.result && job.result.can_rematch ? `<button class="secondary relabel-btn" data-job-id="${escapeHtml(job.id)}">화자 이름 수정</button>` : ""}
-        ${!isActive ? `<button class="secondary delete-job-btn" data-job-id="${escapeHtml(job.id)}">삭제</button>` : ""}
+        ${isActive ? `<button class="danger cancel-btn" data-job-id="${escapeHtml(job.id)}">${t("cancelJobBtn")}</button>` : ""}
+        ${job.status === "done" && job.result && job.result.can_rematch ? `<button class="secondary rematch-btn" data-job-id="${escapeHtml(job.id)}">${t("rematchBtn")}</button>` : ""}
+        ${job.status === "done" && job.result && job.result.can_rematch ? `<button class="secondary relabel-btn" data-job-id="${escapeHtml(job.id)}">${t("relabelBtn")}</button>` : ""}
+        ${!isActive ? `<button class="secondary delete-job-btn" data-job-id="${escapeHtml(job.id)}">${t("deleteBtn")}</button>` : ""}
       </div>
       <div class="relabel-panel" data-id="${escapeHtml(job.id)}" hidden></div>
       ${savedInfo}
@@ -513,9 +513,9 @@ function renderJobsPagination(offset, total) {
     return;
   }
   el.innerHTML = `
-    <button class="secondary" id="jobsPrevBtn" ${offset === 0 ? "disabled" : ""}>이전</button>
-    <span class="muted">${currentPage} / ${totalPages} 페이지 (총 ${total}개)</span>
-    <button class="secondary" id="jobsNextBtn" ${offset + JOBS_PAGE_SIZE >= total ? "disabled" : ""}>다음</button>
+    <button class="secondary" id="jobsPrevBtn" ${offset === 0 ? "disabled" : ""}>${t("prevPageBtn")}</button>
+    <span class="muted">${t("pageInfo", currentPage, totalPages, total)}</span>
+    <button class="secondary" id="jobsNextBtn" ${offset + JOBS_PAGE_SIZE >= total ? "disabled" : ""}>${t("nextPageBtn")}</button>
   `;
   $("#jobsPrevBtn").addEventListener("click", () => {
     jobsOffset = Math.max(0, jobsOffset - JOBS_PAGE_SIZE);
@@ -530,21 +530,17 @@ function renderJobsPagination(offset, total) {
 function openRelabelPanel(job, btn, savedEdits) {
   const el = document.querySelector(`.relabel-panel[data-id="${CSS.escape(job.id)}"]`);
   if (!el) return;
-  btn.textContent = "화자 이름 수정 ▴ (접기)";
+  btn.textContent = t("relabelBtnExpanded");
   expandedRelabelPanels.add(job.id);
 
   const speakers = job.result.speakers || {};
   const debug = job.result.match_debug || {};
   const rawLabels = Object.keys(speakers).sort();
   el.innerHTML = `
-    <p class="muted" style="margin:0 0 8px;">
-      화자분리가 같은 사람을 서로 다른 번호로 나눠놨다면, 여기서 이름을 직접 맞춰주세요.
-      원본 화자 번호(SPEAKER_XX)는 이 작업 안에서는 고정이지만, 다른 작업(다시 변환/재매칭)에서는 서로 다른 사람을 가리킬 수 있으니
-      화면에 보이는 발언 내용으로 확인하시는 게 안전합니다.
-    </p>
+    <p class="muted" style="margin:0 0 8px;">${escapeHtml(t("relabelHelpText"))}</p>
     ${rawLabels
       .map((label) => {
-        const scoreNote = debug[label] ? ` <span class="muted">(${Math.round(debug[label].score * 100)}% 유사 · ${escapeHtml(debug[label].closest_profile)})</span>` : "";
+        const scoreNote = debug[label] ? ` <span class="muted">${escapeHtml(t("scoreNote", Math.round(debug[label].score * 100), debug[label].closest_profile))}</span>` : "";
         const value = savedEdits && Object.prototype.hasOwnProperty.call(savedEdits, label) ? savedEdits[label] : speakers[label];
         return `<div class="relabel-row">
           <span class="muted" style="font-family:monospace;">${escapeHtml(label)}</span>
@@ -553,7 +549,7 @@ function openRelabelPanel(job, btn, savedEdits) {
         </div>`;
       })
       .join("")}
-    <button class="relabel-save-btn" data-job-id="${escapeHtml(job.id)}" style="margin-top:10px;">저장하고 다시 생성</button>
+    <button class="relabel-save-btn" data-job-id="${escapeHtml(job.id)}" style="margin-top:10px;">${t("relabelSaveBtn")}</button>
   `;
   el.hidden = false;
 }
@@ -561,7 +557,7 @@ function openRelabelPanel(job, btn, savedEdits) {
 function closeRelabelPanel(jobId, btn) {
   const el = document.querySelector(`.relabel-panel[data-id="${CSS.escape(jobId)}"]`);
   if (el) el.hidden = true;
-  if (btn) btn.textContent = "화자 이름 수정";
+  if (btn) btn.textContent = t("relabelBtn");
   expandedRelabelPanels.delete(jobId);
 }
 
@@ -584,13 +580,13 @@ $("#jobs").addEventListener("click", async (e) => {
       overrides[input.dataset.label] = input.value.trim();
     });
     relabelSaveBtn.disabled = true;
-    relabelSaveBtn.textContent = "적용 중...";
+    relabelSaveBtn.textContent = t("relabelSaving");
     const fd = new FormData();
     fd.append("overrides", JSON.stringify(overrides));
     const res = await fetch(`/api/jobs/${relabelSaveBtn.dataset.jobId}/relabel`, { method: "POST", body: fd });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "적용 실패" }));
-      alert(err.detail || "적용 실패");
+      const err = await res.json().catch(() => ({ detail: t("alertApplyFailed") }));
+      alert(err.detail || t("alertApplyFailed"));
     }
     expandedRelabelPanels.delete(relabelSaveBtn.dataset.jobId);
     loadJobs();
@@ -607,9 +603,9 @@ $("#jobs").addEventListener("click", async (e) => {
 
   const cancelBtn = e.target.closest(".cancel-btn");
   if (cancelBtn) {
-    if (!confirm("진행 중인 작업을 취소할까요?")) return;
+    if (!confirm(t("confirmCancelJob"))) return;
     cancelBtn.disabled = true;
-    cancelBtn.textContent = "취소 중...";
+    cancelBtn.textContent = t("cancellingBtn");
     await fetch(`/api/jobs/${cancelBtn.dataset.jobId}/cancel`, { method: "POST" });
     loadJobs();
     return;
@@ -617,7 +613,7 @@ $("#jobs").addEventListener("click", async (e) => {
 
   const deleteBtn = e.target.closest(".delete-job-btn");
   if (deleteBtn) {
-    if (!confirm("이 작업 기록을 삭제할까요? (저장 위치에 이미 저장된 결과 파일은 그대로 남습니다)")) return;
+    if (!confirm(t("confirmDeleteJob"))) return;
     deleteBtn.disabled = true;
     await fetch(`/api/jobs/${deleteBtn.dataset.jobId}`, { method: "DELETE" });
     loadJobs();
@@ -626,20 +622,22 @@ $("#jobs").addEventListener("click", async (e) => {
 
   const rematchBtn = e.target.closest(".rematch-btn");
   if (rematchBtn) {
-    if (!confirm("현재 화자 매칭 민감도 / 선택된 프로필로 다시 매칭할까요? 화자 분리·전사는 재사용하므로 빠르게 끝납니다.")) return;
+    if (!confirm(t("confirmRematch"))) return;
     rematchBtn.disabled = true;
-    rematchBtn.textContent = "재매칭 시작 중...";
+    rematchBtn.textContent = t("rematchStartingBtn");
     const fd = new FormData();
     fd.append("profile_ids", getSelectedProfileIds().join(","));
     const res = await fetch(`/api/jobs/${rematchBtn.dataset.jobId}/rematch`, { method: "POST", body: fd });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: "재매칭 실패" }));
-      alert(err.detail || "재매칭 실패");
+      const err = await res.json().catch(() => ({ detail: t("alertRematchFailed") }));
+      alert(err.detail || t("alertRematchFailed"));
     }
     loadJobs();
   }
 });
 
+applyStaticI18n();
+renderReadScript();
 loadSettings();
 loadProfiles();
 loadJobs();

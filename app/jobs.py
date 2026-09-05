@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from . import config
+from . import config, i18n
 from .errors import JobCancelled
 
 _JOBS_FILE = config.DATA_DIR / "jobs.json"
@@ -35,7 +35,7 @@ def _load_jobs():
         # progress bar stuck forever.
         if job.get("status") not in _TERMINAL_STATUSES:
             job["status"] = "error"
-            job["message"] = "앱이 종료되어 작업이 중단되었습니다."
+            job["message"] = i18n.t("app_restarted_interrupted")
             job["error"] = "interrupted by app restart"
             changed = True
         _JOBS[job["id"]] = job
@@ -115,7 +115,7 @@ def create_job(
             "filename": original_filename,
             "status": "queued",
             "progress": 0,
-            "message": "대기 중...",
+            "message": i18n.t("queued"),
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "input_path": str(input_path),
             "owns_file": owns_file,
@@ -147,10 +147,10 @@ def create_rematch_job(source_job_id: str, profile_ids: list[str] | None) -> str
     with _LOCK:
         _JOBS[job_id] = {
             "id": job_id,
-            "filename": f"{source['filename']} (재매칭)",
+            "filename": f"{source['filename']} {i18n.t('rematch_suffix')}",
             "status": "queued",
             "progress": 0,
-            "message": "대기 중...",
+            "message": i18n.t("queued"),
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "wav_saved_path": (source.get("result") or {}).get("saved_paths", {}).get("wav"),
             "profile_ids": profile_ids,
@@ -181,10 +181,10 @@ def create_relabel_job(source_job_id: str, speaker_names: dict[str, str]) -> str
     with _LOCK:
         _JOBS[job_id] = {
             "id": job_id,
-            "filename": f"{source['filename']} (이름 수정)",
+            "filename": f"{source['filename']} {i18n.t('relabel_suffix')}",
             "status": "queued",
             "progress": 0,
-            "message": "대기 중...",
+            "message": i18n.t("queued"),
             "created_at": datetime.now().isoformat(timespec="seconds"),
             "wav_saved_path": (source.get("result") or {}).get("saved_paths", {}).get("wav"),
             "profile_ids": source.get("profile_ids"),
@@ -213,7 +213,7 @@ def cancel_job(job_id: str) -> bool:
     if not event:
         return False
     event.set()
-    _update(job_id, message="취소 요청됨... (진행 중인 단계가 끝나는 대로 중단됩니다)")
+    _update(job_id, message=i18n.t("cancel_requested"))
     return True
 
 
@@ -241,9 +241,7 @@ def _worker_loop():
 
             if job.get("kind") == "rematch":
                 if not job.get("wav_saved_path"):
-                    raise RuntimeError(
-                        "재매칭에 필요한 오디오가 없습니다 (원본 작업이 이 기능이 생기기 전에 만들어졌을 수 있습니다)."
-                    )
+                    raise RuntimeError(i18n.t("rematch_missing_audio"))
                 pipeline.rematch_job(
                     job_id,
                     job["source_job_id"],
@@ -273,14 +271,14 @@ def _worker_loop():
                     max_speakers=job.get("max_speakers"),
                 )
         except JobCancelled:
-            _update(job_id, status="cancelled", message="사용자가 취소했습니다.")
+            _update(job_id, status="cancelled", message=i18n.t("cancelled_by_user"))
             shutil.rmtree(config.OUTPUT_DIR / job_id, ignore_errors=True)
         except Exception as e:
             _update(
                 job_id,
                 status="error",
                 error=f"{e}\n{traceback.format_exc()}",
-                message=f"오류 발생: {e}",
+                message=i18n.t("error_occurred", error=e),
             )
         finally:
             _CANCEL_EVENTS.pop(job_id, None)
